@@ -16,8 +16,8 @@ raw_cheque_req_form_path =r'./Reimbursement Data/Blank Forms/raw_cheque_req_form
     The common_info consists of data, that all reimbursement forms will contain.
 """
 def get_requests_and_common_data():
-    if len(sys.argv) != 2:
-        print("Error: Invalid Input Passed in terminal. A command should be of the form:\n python fill_up_cheque_req.py dir/FileName.csv")
+    if len(sys.argv) != 3:
+        print("Error: Invalid Input Passed in terminal. A command should be of the form:\n python fill_up_cheque_req.py dir/input_file.csv output_file_dir")
         sys.exit(1)
 
     # get file path of excel file that contains reimburesements values that need to be added into forms
@@ -44,8 +44,6 @@ def get_requests_and_common_data():
 def main():
 
     common_info, requests = get_requests_and_common_data()
-    print(requests)
-    print(requests.columns)
 
     # pdf_writer will contain all forms
     pdf_writer = PdfWriter()
@@ -79,9 +77,9 @@ def main():
 
     requests.apply(fill_out_form, axis=1)
 
+    combined_output_path = sys.argv[2]
     # Write all filled forms into a single PDF
-    combined_output_path = "output forms/combined_forms2.pdf"
-    with open(combined_output_path, 'wb') as out_pdf:
+    with open(os.path.join(combined_output_path,"filled_form.pdf"), 'wb') as out_pdf:
         pdf_writer.write(out_pdf)
         
 
