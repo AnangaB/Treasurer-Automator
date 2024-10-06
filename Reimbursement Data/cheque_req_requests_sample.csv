@@ -1,0 +1,6 @@
+,Requester,Amount,Reason,Requested By,Position,Cheque Picked Up By,Mail Off Campus Checkbox,Mail On Campus Checkbox,Street Address,Email,City And Province,Postal Code,Form Created
+0,John Doe,$500,Event catering,Ananga Bajgai,Treasurer,Sarah Smith,Yes,No,1234 Elm St,john@example.com,"Burnaby, BC",V5K 0A1,True
+1,Jane Roe,$250,Guest speaker fee,Ananga Bajgai,Treasurer,Mike Johnson,No,Yes,5678 Oak St,jane@example.com,"Burnaby, BC",V5K 0A1,True
+2,Alice Lee,$150,Printing flyers,Ananga Bajgai,Treasurer,,Yes,No,4321 Pine St,alice@example.com,"Burnaby, BC",V3W 0E1,True
+3,Bob Smith,$1000,Equipment rental,Ananga Bajgai,Treasurer,,No,Yes,8765 Maple St,bob@example.com,"Burnaby, BC",V6X 2T1,True
+4,Charlie Brown,$300,Travel reimbursement,Ananga Bajgai,Treasurer,Laura White,Yes,No,9101 Cedar St,charlie@example.com,"Burnaby, BC",V3J 4Z1,True
