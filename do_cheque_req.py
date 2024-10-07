@@ -6,9 +6,14 @@ import json
 import sys
 from pypdf import PdfWriter, PdfReader
 from fill_reimbursement_form import get_single_filled_req_form
+from pdf2image import convert_from_path
+
 
 #file path for common data, which is data used in all forms
 common_data_file_path = r'./Reimbursement Data/common_info.json'
+
+#file path for grant summary page
+grant_summary_page = r"./Reimbursement Data\Blank Forms/SFSS-Form-EventProjectSummary.pdf"
 
 """ Returns Requests df and Common Info df, after receiving files from terminal and accessing stored files. Program will exit, if improper data is received. 
     The requests data is a dataset with information to fill reimbursement forms with. 
@@ -55,12 +60,12 @@ def get_data_via_args():
 
     return common_info, execs_data, requests, meeting_mins_dir, output_dir
 
-    """ Creates and saves a pdf, that contains all filled in cheque requestions for funds being taken from core.
+    """ Creates a pdf, that contains all filled in cheque requestions for funds
     """
-def complete_all_core_requests(core_requests, common_info, execs_data, meeting_mins_folder, output_folder):
+def complete_all_individual_requests(requests, common_info, execs_data, meeting_mins_folder):
     
-    #will contain all forms for core_requests reimbursements
-    all_core_filled_forms = PdfWriter()
+    #will contain all forms for requests reimbursements
+    all_filled_forms = PdfWriter()
     
     def fill_form(payee_details):
         filtered_exec = execs_data[execs_data["Name"] == payee_details["Requester"]]
@@ -70,23 +75,29 @@ def complete_all_core_requests(core_requests, common_info, execs_data, meeting_m
             exec_email = filtered_exec["Email"].values[0] 
 
         filled_form = get_single_filled_req_form(common_info, payee_details, exec_email)
-        all_core_filled_forms.add_page(filled_form)
+        all_filled_forms.add_page(filled_form)
         #add blank page after
-        all_core_filled_forms.add_blank_page()
+        all_filled_forms.add_blank_page()
         #append relevant meeting minutes pdf as well
         mins_file_path = os.path.join(meeting_mins_folder, payee_details["Minutes File"])
-        all_core_filled_forms.append(mins_file_path)
+        all_filled_forms.append(mins_file_path)
         #add blank page, if 
-        if len(all_core_filled_forms.pages) % 2 != 0:
-            all_core_filled_forms.add_blank_page()
+        if len(all_filled_forms.pages) % 2 != 0:
+            all_filled_forms.add_blank_page()
 
 
-    core_requests.apply(fill_form, axis=1)
+    requests.apply(fill_form, axis=1)
+    return all_filled_forms
 
-    output_file_name = str(common_info["date_today"]) + " " + str(len(core_requests)) + " core reimbursements" + ".pdf"
-    # Write all filled forms into a single PDF
-    with open(os.path.join(output_folder,output_file_name), 'wb') as out_pdf:
-        all_core_filled_forms.write(out_pdf)
+def append_grant_summary_page_to_pdf(pdf_writer):
+        #add blank page, if 
+        if len(pdf_writer.pages) % 2 != 0:
+            pdf_writer.add_blank_page()
+        pdf_writer.append(grant_summary_page)
+
+        return pdf_writer
+
+
 
 def main():
 
@@ -94,9 +105,30 @@ def main():
 
     core_requests = requests.loc[(requests["Fund Type"] == "Core") & ((requests["Form Created"]) == False) ]
     if(len(core_requests) > 0):
-        complete_all_core_requests(core_requests, common_info, execs_data, meeting_mins_dir, output_dir )
+        filled_out_core_forms = complete_all_individual_requests(core_requests, common_info, execs_data, meeting_mins_dir )
+        output_file_name = str(common_info["date_today"]) + " " + str(len(core_requests)) + " core reimbursements" + ".pdf"
+        # Write all filled forms into a single PDF
+        with open(os.path.join(output_dir,output_file_name), 'wb') as out_pdf:
+            filled_out_core_forms.write(out_pdf)
+            
+            
 
-    #grant_requests = requests.loc[(requests["Fund Type"] == "Grant") & ((requests["Form Created"]) == False) ]
+    #do all grant requests
+    grant_requests = requests.loc[(requests["Fund Type"] == "Grant") & ((requests["Form Created"]) == False) ]
+    grant_ids = grant_requests["Grant ID"].dropna().unique()
+
+    for id in grant_ids:
+        id_specific_requests = grant_requests[grant_requests["Grant ID"] == id]
+        if(len(id_specific_requests) > 0):
+            filled_out_grant_cheque_reqs = complete_all_individual_requests(id_specific_requests, common_info, execs_data, meeting_mins_dir )
+            
+            #append grant event summary page to the back
+            filled_out_grant_cheque_reqs = append_grant_summary_page_to_pdf(filled_out_grant_cheque_reqs)
+            output_file_name = str(common_info["date_today"]) + "-grant-" +  str(int(id)) + "-reimbursements" + ".pdf"
+            # Write all filled forms into a single PDF
+            with open(os.path.join(output_dir,output_file_name), 'wb') as out_pdf:
+                filled_out_grant_cheque_reqs.write(out_pdf)
+
 
         
 if __name__ == '__main__':
